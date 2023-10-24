@@ -3,7 +3,7 @@ import email
 import yaml
 import openai
 
-api_key = "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"
+api_key = "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"
 
 def open_yml_file(fileName):
     with open(fileName) as f:
@@ -35,31 +35,23 @@ def perform_search(my_mail, date):
     value = date
     _, data = my_mail.search(None, key, value)
     mail_id_list = data[0].split()
-    msgs = [] 
     #Iterate through messages and extract data into the msgs list
     for num in mail_id_list:
         typ, data = my_mail.fetch(num, '(RFC822)') #RFC822 returns whole message (BODY fetches just body)
-        msgs.append(data)
-    prompts = open_yml_file("prompts.yml")
-    pre_screen_prompt = prompts["subject_and_sender_prompt1"]
-    openai.Completion.create(
-        engine="text-davinci-002",
-        prompt=pre_screen_prompt,
-        max_tokens=50,
-        api_key=api_key
-    )
-    # Iterate through all of the emails starting at date
-    for msg in msgs[::-1]:
-        for response_part in msg:
-            if type(response_part) is tuple:
-                my_msg=email.message_from_bytes((response_part[1]))
-                likelihood = openai.Completion.create(
-                    engine="text-davinci-002",
-                    prompt="subject: {}. sender: {}".format(my_msg['subject'], my_msg['from']),
-                    max_tokens=50,
-                    api_key=api_key
-                )
-                print(likelihood.choices[0].text)
+        msg = email.message_from_string(data[0][1].decode('utf-8'))
+        subject = msg['subject']
+        sender = msg['from']
+        prompts = open_yml_file("prompts.yml")
+        pre_screen_prompt = prompts["subject_and_sender_prompt1"]
+        likelihood = openai.Completion.create(
+            engine="text-davinci-002",
+            prompt=pre_screen_prompt+ "\n" + "subject: {subject}. sender: {sender}",
+            max_tokens=50,
+            api_key=api_key,
+            n=1
+        )
+        print(f"Subject: {subject}\nSender: {sender}", likelihood.choices[0].text)
+
 
 def main():
     quit = False
