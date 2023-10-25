@@ -41,11 +41,18 @@ def perform_search(my_mail, date):
         msg = email.message_from_string(data[0][1].decode('utf-8'))
         subject = msg['subject']
         sender = msg['from']
+        description = ""
+        if msg.is_multipart():
+            for part in msg.walk():
+                if part.get_content_type() == "text/plain":
+                    temp = part.get_payload(decode=True).decode('utf-8')
+                    if temp:
+                        description += temp
         prompts = open_yml_file("prompts.yml")
         pre_screen_prompt = prompts["subject_and_sender_prompt1"]
         likelihood = openai.Completion.create(
             engine="text-davinci-002",
-            prompt=pre_screen_prompt+ "\n" + "subject: {subject}. sender: {sender}",
+            prompt=pre_screen_prompt+ "\n" + "subject: {subject}\nsender: {sender}\n description: {description}",
             max_tokens=50,
             api_key=api_key,
             n=1
