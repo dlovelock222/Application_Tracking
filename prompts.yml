@@ -1,1 +1,0 @@
-prompt1: "Given the sender, subject, and body of an email determine if this email is related to a job application update. If it is, then I want you to print the job title, company, and what stage of the application process the email relates to. If it is not, I want you to return false, with no additional text."
